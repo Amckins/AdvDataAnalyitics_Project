@@ -4,18 +4,18 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, LabelSet, Button, Div, TextInput
 from bokeh.layouts import column, row
 from bokeh.io import curdoc
-import time
-
+from scramble import generate_random_scramble
 #labels intended to diagnose issues w/ indexing
-use_labels = True
+use_labels = False
+
+#when scrambling, how many moves should be generated
+scramble_length = 20
 
 #shape and formatting parameters
 step = 0.4
 val = 0.5
 cube_size = 2
-a = 0.4
-b = 0
-c = 0
+a, b, c = 0.4, 0, 0
 d = a * np.tan(np.deg2rad(60))
 
 rings = [val + i * step for i in range(cube_size)]
@@ -115,51 +115,51 @@ def rotate_face(face_move):
     #Read which face is being turned and which direction should be turned
     face_name = face_move.rstrip("'")
     clockwise = not face_move.endswith("'")
-    
-    # Rotate the ring
-    dot_ids = RINGS[face_name + "r"]
-    current_colors = [dot_colors[dot_id] for dot_id in dot_ids]
-    
-    if clockwise:
-        rotated_colors = current_colors[-cube_size:] + current_colors[:-cube_size]
-    else:
-        rotated_colors = current_colors[cube_size:] + current_colors[:cube_size]
-    
-    for dot_id, color in zip(dot_ids, rotated_colors):
-        dot_colors[dot_id] = color
-    
-    # Rotate the face (2x2 grid)
-    if face_name in FACES:
+    if (face_name + "r") in RINGS and face_name in FACES:
+        # Rotate the ring
+        dot_ids = RINGS[face_name + "r"]
+        current_colors = [dot_colors[dot_id] for dot_id in dot_ids]
+        
+        if clockwise:
+            rotated_colors = current_colors[-cube_size:] + current_colors[:-cube_size]
+        else:
+            rotated_colors = current_colors[cube_size:] + current_colors[:cube_size]
+        
+        for dot_id, color in zip(dot_ids, rotated_colors):
+            dot_colors[dot_id] = color
+
+        # Rotate the face (2x2 grid)
         dot_ids = FACES[face_name]
         current_colors = [dot_colors[dot_id] for dot_id in dot_ids]
         n = len(current_colors)
-        size = int(n ** 0.5)  # For 2x2, size = 2
         
         rotated_colors = [0] * n
         for i in range(n):
-            row = i // size
-            col = i % size
+            row = i // cube_size
+            col = i % cube_size
             
             if clockwise:
                 # Clockwise: (row, col) -> (col, size-1-row)
                 new_row = col
-                new_col = size - 1 - row
+                new_col = cube_size - 1 - row
             else:
                 # Counter-clockwise: (row, col) -> (size-1-col, row)
-                new_row = size - 1 - col
+                new_row = cube_size - 1 - col
                 new_col = row
             
-            new_idx = new_row * size + new_col
+            new_idx = new_row * cube_size + new_col
             rotated_colors[new_idx] = current_colors[i]
         
         for dot_id, color in zip(dot_ids, rotated_colors):
             dot_colors[dot_id] = color
+    else:
+        raise ValueError(f"{face_name} is not a valid Face Name!")
     
     # Update the data source
-    source.data = dict(x=x_vals,
-                      y=y_vals,
-                      color=dot_colors.copy(),
-                      dot_id=[str(i) for i in range(len(x_vals))])
+    source.data = dict(x = x_vals,
+                      y = y_vals,
+                      color = dot_colors.copy(),
+                      dot_id = [str(i) for i in range(len(x_vals))])
 
 def parse_move_sequence(sequence):
     """when setting up the messed up state and when solving it, a sequence is needed"""
@@ -194,12 +194,18 @@ def execute_sequence():
     """execute a sequence of moves from the text input"""
     sequence = text_input.value
     moves = parse_move_sequence(sequence)
-    
     for move in moves:
         rotate_face(move)
     
     #clear the text field
     text_input.value = ""
+
+def execute_scramble():
+    """execute a sequence of moves from the text input"""
+    sequence = generate_random_scramble(scramble_length = scramble_length)
+    moves = parse_move_sequence(sequence)
+    for move in moves:
+        rotate_face(move)
 
 #draw dots
 source = ColumnDataSource(data = dict(x = x_vals,
@@ -263,6 +269,10 @@ button_R_prime.on_click(lambda: rotate_face("R'"))
 button_L.on_click(lambda: rotate_face("L"))
 button_L_prime.on_click(lambda: rotate_face("L'"))
 
+#create scramble button
+button_scramble = Button(label = "Scramble", button_type = "warning", width = 110)
+button_scramble.on_click(execute_scramble)
+
 #formatting buttons to pack into the display
 button_col = column(
     row(button_U, button_U_prime),
@@ -270,7 +280,8 @@ button_col = column(
     row(button_B, button_B_prime),
     row(button_F, button_F_prime),
     row(button_R, button_R_prime),
-    row(button_L, button_L_prime)
+    row(button_L, button_L_prime),
+    row(button_scramble)
 )
 
 # Layout with text input at the top
@@ -278,5 +289,6 @@ layout = column(
     row(p, button_col),
     row(execute_button, text_input)
 )
+
 
 curdoc().add_root(layout)

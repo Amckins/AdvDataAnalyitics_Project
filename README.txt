@@ -1,4 +1,7 @@
 This is for 2-D visualizaion of a 2x2 rubiks cube
+I cannot find the original version of this to credit them, but this was inspired by 
+https://www.reddit.com/r/interestingasfuck/comments/1cbw71j/rubiks_cube_explained_in_2d_model_is_easier_to/
+
 You can visualize it by running in your terminal
 bokeh serve visual.py
 and ctl-click the local host option
