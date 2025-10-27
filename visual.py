@@ -8,6 +8,8 @@ from scramble import generate_random_scramble
 #labels intended to diagnose issues w/ indexing
 use_labels = False
 
+view_scramble_progress = True
+
 #when scrambling, how many moves should be generated
 scramble_length = 20
 
@@ -31,9 +33,13 @@ centers = [
     (-a - x_shift, -b - y_shift),
     (c - x_shift, d - y_shift)]
 
-colors = ["#ffffff", "#ffff00",
-          "#ff6400", "#ff0000",
-          "#0000bb", "#00bb00"]
+color_dict = {"#ffffff": 1,
+              "#ffff00": 2,
+              "#ff6400": 3,
+              "#ff0000": 4,
+              "#0000bb": 5,
+              "#00bb00": 6}
+color_list = list(color_dict.keys()) #don't judge my bad coding practices. i hate it too
 
 #Between any two circles, find the coordinates where they intersect
 #For general cases in this use case, there should always be 2 points
@@ -81,8 +87,8 @@ for (c1, c2) in combinations(centers, 2):
         r1, r2 = np.sqrt(r_sq1), np.sqrt(r_sq2)
         pts = circle_intersections(c1[0], c1[1], r1, c2[0], c2[1], r2)
         if len(pts) == 2:
-            color1 = colors[group_index % len(colors)]
-            color2 = colors[(group_index + 1) % len(colors)]
+            color1 = color_list[group_index % len(color_list)]
+            color2 = color_list[(group_index + 1) % len(color_list)]
             
             for i, (x, y) in enumerate(pts):
                 x_vals.append(x)
@@ -95,29 +101,40 @@ for (c1, c2) in combinations(centers, 2):
 
 #create lists of indices that correspond to the faces/rings 
 #when a ring 'turns' the corresponding face will need to turn as well
+# FACES = {
+#     "U" : [4, 6, 0, 2],
+#     "D" : [1, 3, 5, 7],
+#     "B" : [8, 12, 10, 14],
+#     "F" : [9, 11, 13, 15],
+#     "R" : [16, 20, 18, 22],
+#     "L" : [17, 19, 21, 23]    
+# } 
+
+
 FACES = {
-    "U" : [4, 6, 0, 2],
-    "D" : [1, 3, 5, 7],
-    "B" : [8, 12, 10, 14],
-    "F" : [9, 11, 13, 15],
-    "R" : [16, 20, 18, 22],
-    "L" : [17, 19, 21, 23]    
+    "U" : [4, 6, 2, 0],
+    "D" : [5, 1, 3, 7],
+    "B" : [8, 12, 14, 10],
+    "F" : [13, 9, 11, 15],
+    "R" : [16, 20, 22, 18],
+    "L" : [23, 21, 17, 19]    
 } 
+
 RINGS = {
-    "Ur" : [12, 8, 20, 16, 9, 13, 17, 21],
-    "Dr" : [23, 19, 15, 11, 18, 22, 10, 14],
-    "Br" : [7, 3, 22, 20, 2, 6, 21, 23],
-    "Fr" : [19, 17, 4, 0, 16, 18, 1, 5],
-    "Rr" : [3, 1, 11, 9, 0, 2, 8, 10],
-    "Lr" : [14, 12, 6, 4, 13, 15, 5, 7]
+    "U" : [12, 8, 20, 16, 9, 13, 17, 21],
+    "D" : [23, 19, 15, 11, 18, 22, 10, 14],
+    "B" : [7, 3, 22, 20, 2, 6, 21, 23],
+    "F" : [19, 17, 4, 0, 16, 18, 1, 5],
+    "R" : [3, 1, 11, 9, 0, 2, 8, 10],
+    "L" : [14, 12, 6, 4, 13, 15, 5, 7]
 }
 def rotate_face(face_move):
     #Read which face is being turned and which direction should be turned
     face_name = face_move.rstrip("'")
     clockwise = not face_move.endswith("'")
-    if (face_name + "r") in RINGS and face_name in FACES:
+    if (face_name) in RINGS and face_name in FACES:
         # Rotate the ring
-        dot_ids = RINGS[face_name + "r"]
+        dot_ids = RINGS[face_name ]
         current_colors = [dot_colors[dot_id] for dot_id in dot_ids]
         
         if clockwise:
@@ -131,24 +148,10 @@ def rotate_face(face_move):
         # Rotate the face (2x2 grid)
         dot_ids = FACES[face_name]
         current_colors = [dot_colors[dot_id] for dot_id in dot_ids]
-        n = len(current_colors)
-        
-        rotated_colors = [0] * n
-        for i in range(n):
-            row = i // cube_size
-            col = i % cube_size
-            
-            if clockwise:
-                # Clockwise: (row, col) -> (col, size-1-row)
-                new_row = col
-                new_col = cube_size - 1 - row
-            else:
-                # Counter-clockwise: (row, col) -> (size-1-col, row)
-                new_row = cube_size - 1 - col
-                new_col = row
-            
-            new_idx = new_row * cube_size + new_col
-            rotated_colors[new_idx] = current_colors[i]
+        if clockwise:
+            rotated_colors =  current_colors[-1:] + current_colors[:-1]
+        else:
+            rotated_colors = current_colors[1: ] + current_colors[ :1]
         
         for dot_id, color in zip(dot_ids, rotated_colors):
             dot_colors[dot_id] = color
@@ -160,6 +163,7 @@ def rotate_face(face_move):
                       y = y_vals,
                       color = dot_colors.copy(),
                       dot_id = [str(i) for i in range(len(x_vals))])
+    print(read_current_state())
 
 def parse_move_sequence(sequence):
     """when setting up the messed up state and when solving it, a sequence is needed"""
@@ -206,7 +210,14 @@ def execute_scramble():
     moves = parse_move_sequence(sequence)
     for move in moves:
         rotate_face(move)
+    if view_scramble_progress:
+        print(read_current_state())
 
+def read_current_state():
+    state = []
+    for hex_code in source.data['color']:
+        state.append(color_dict[hex_code])
+    return state
 #draw dots
 source = ColumnDataSource(data = dict(x = x_vals,
                                       y = y_vals,
