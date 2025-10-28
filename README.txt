@@ -47,3 +47,13 @@ U will change the colors in [4, 6, 2, 0] into the values that were in [0, 4, 6, 
     from [12, 8, 20, 16, 9, 13, 17, 21] to [17, 21, 12, 8, 20, 16, 9, 13]
     or   [3, 3, 5, 5, 4, 4, 6, 6]       to [6, 6, 3, 3, 5, 5, 4, 4] in colors
 U' will reverse that action
+
+Readings Thus Far:
+https://proceedings.neurips.cc/paper/2020/file/b710915795b9e9c02cf10d6d2bdb688c-Paper.pdf  10/28/2025
+
+There is a lot that i need to update in this section
+--Added Transition Matrix Generation
+--Added validation for said Matrix
+--tried to implement Q-learning
+----that is going spendedly QQ
+----Q-TABLE needs to be monitored to make sure it remains small for use on Github

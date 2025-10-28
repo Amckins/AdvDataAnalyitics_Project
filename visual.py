@@ -9,6 +9,7 @@ from scramble import generate_random_scramble
 use_labels = False
 
 view_scramble_progress = True
+diagnose_state = False
 
 #when scrambling, how many moves should be generated
 scramble_length = 20
@@ -101,15 +102,6 @@ for (c1, c2) in combinations(centers, 2):
 
 #create lists of indices that correspond to the faces/rings 
 #when a ring 'turns' the corresponding face will need to turn as well
-# FACES = {
-#     "U" : [4, 6, 0, 2],
-#     "D" : [1, 3, 5, 7],
-#     "B" : [8, 12, 10, 14],
-#     "F" : [9, 11, 13, 15],
-#     "R" : [16, 20, 18, 22],
-#     "L" : [17, 19, 21, 23]    
-# } 
-
 
 FACES = {
     "U" : [4, 6, 2, 0],
@@ -163,7 +155,8 @@ def rotate_face(face_move):
                       y = y_vals,
                       color = dot_colors.copy(),
                       dot_id = [str(i) for i in range(len(x_vals))])
-    print(read_current_state())
+    if diagnose_states:
+        print(read_current_state())
 
 def parse_move_sequence(sequence):
     """when setting up the messed up state and when solving it, a sequence is needed"""
@@ -230,7 +223,7 @@ p.circle(x = "x",
          line_color = "black",
          source = source)
 
-# Add labels with dot numbers
+#Add labels with dot numbers
 if use_labels:
     labels = LabelSet(x = "x",
                       y = "y",
@@ -243,16 +236,16 @@ if use_labels:
                       text_baseline="middle")
     p.add_layout(labels)
 
-# Create text input for move sequences
+#Create text input for move sequences
 text_input = TextInput(
                        value="", 
                        width=400)
 
-# Create execute button
+#Create execute button
 execute_button = Button(label="Execute Sequence:", button_type="success", width=150)
 execute_button.on_click(execute_sequence)
 
-# Create buttons for each different move
+#Create buttons for each different move
 button_U = Button(label = "U", button_type = "default", width = 50)
 button_U_prime = Button(label = "U'", button_type = "default", width = 50)
 button_D = Button(label = "D", button_type = "default", width = 50)
@@ -266,7 +259,7 @@ button_R_prime = Button(label = "R'", button_type = "default", width = 50)
 button_L = Button(label = "L", button_type = "default", width = 50)
 button_L_prime = Button(label = "L'", button_type = "default", width = 50)
 
-# create functionality for those buttons
+#create functionality for those buttons
 button_U.on_click(lambda: rotate_face("U"))
 button_U_prime.on_click(lambda: rotate_face("U'"))
 button_D.on_click(lambda: rotate_face("D"))
@@ -295,7 +288,7 @@ button_col = column(
     row(button_scramble)
 )
 
-# Layout with text input at the top
+#Layout with text input at the top
 layout = column(
     row(p, button_col),
     row(execute_button, text_input)

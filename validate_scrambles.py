@@ -1,12 +1,12 @@
 import numpy as np
 from scramble import generate_random_scramble
 import math
+import random
 
-# CONFIGURE
-depth = 9  # Max moves in your matrix
+depth = None
 npz_file = f"cube_output/npz/transitions_depth_{depth}.npz"
-scramble_length = 1000
-freq_of_outputs = int(.05 * 10 **int(math.log10(scramble_length)))
+num_scrambles = 100000
+freq_of_outputs = int(.05 * 10 **int(math.log10(num_scrambles)))
 
 FACES = {"U": [4, 6, 2, 0], 
          "D": [5, 1, 3, 7],
@@ -53,7 +53,9 @@ def turn(state, move):
     return new_state
 
 # Load
+print(f"Loading Transition Matrix from {npz_file}")
 data = np.load(npz_file)
+print(f"\nLoaded Transition Matrix")
 transitions = data['transitions']
 moves = list(data['moves'])
 id_to_state = data['id_to_state']
@@ -62,7 +64,7 @@ solved_id = data['solved_state_ids'][0]
 move_to_id = {m: i for i, m in enumerate(moves)}
 UNKNOWN = np.iinfo(np.uint32).max
 
-print(f"Testing {scramble_length} scrambles at depth ≤ {depth}...")
+print(f"Testing {num_scrambles} scrambles at depth ≤ {depth}...")
 
 matches = 0
 mismatches = 0
@@ -70,13 +72,18 @@ unknown = 0
 too_long = 0
 unknown_scrambles = []
 
-for i in range(scramble_length):
-    scramble = expand_moves(generate_random_scramble(depth))
+for i in range(num_scrambles):
+    if depth is None:
+        len = random.randint(14,30)
+        scramble = expand_moves(generate_random_scramble(len))
+    else:
+        scramble = expand_moves(generate_random_scramble(depth))
     
     # Skip if expanded scramble exceeds matrix depth
-    if len(scramble) > depth:
-        too_long += 1
-        continue
+    if depth is not None:
+        if len(scramble) > depth:
+            too_long += 1
+            continue
     
     # Via matrix - track states
     matrix_states = [solved_id]
@@ -124,12 +131,12 @@ for i in range(scramble_length):
     
     if (i + 1) % freq_of_outputs == 0:
         tested = matches + mismatches + unknown
-        print(f"  Progress: {i+1}/{scramble_length} (Tested: {tested}, Matches: {matches}, Mismatches: {mismatches}, Unknown: {unknown}, Too long: {too_long})")
+        print(f"  Progress: {i+1}/{num_scrambles} (Tested: {tested}, Matches: {matches}, Mismatches: {mismatches}, Unknown: {unknown}, Too long: {too_long})")
 
 print(f"\n{'='*70}")
 print(f"RESULTS")
 print(f"{'='*70}")
-print(f"Total generated: {scramble_length}")
+print(f"Total generated: {num_scrambles}")
 print(f"  Too long after expansion: {too_long}")
 print(f"  Tested: {matches + mismatches + unknown}")
 print(f"    Matches: {matches}")

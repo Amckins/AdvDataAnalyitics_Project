@@ -22,7 +22,18 @@ RINGS = {
     "R": [3, 1, 11, 9, 0, 2, 8, 10],
     "L": [14, 12, 6, 4, 13, 15, 5, 7]
 }
-
+def format_time(elapsed_time):
+    hours = int(elapsed_time // 3600)
+    minutes = int((elapsed_time % 3600) // 60)
+    seconds = elapsed_time % 60
+    time_str = ""
+    if hours > 0:
+        time_str += f"{hours}h "
+    if minutes > 0:
+        time_str += f"{minutes}m "
+    if seconds > 0:
+        time_str += f"{seconds:.1f}s"
+    return time_str
 def turn(state, move):
     new_state = state.copy()
     face_name = move.rstrip("'2")
@@ -144,6 +155,10 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(npz_dir, exist_ok=True)
     
+    # Create CSV to log progress
+    csv_file = os.path.join(output_dir, 'progress_log.csv')
+    csv_exists = os.path.exists(csv_file)
+
     if resume_from:
         print(f"Resuming from: {resume_from}")
         with open(resume_from, 'rb') as f:
@@ -154,6 +169,7 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
         current_level = data['current_level']
         depth = data['depth']
         start_time = time.time() - data['elapsed_time']
+        last_logged_count = (len(state_to_id) // 100000) * 100000
     else:
         base_solved = [1, 2, 1, 2, 1, 2, 1, 2,
                        3, 4, 3, 4, 3, 4, 3, 4,
@@ -175,7 +191,13 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
         current_level = [(state_id, None) for state_id in solved_state_ids]
         depth = 0
         start_time = time.time()
-    
+        last_logged_count = 0
+
+        #start the csv to log data
+        with open(csv_file, 'w', newline = '') as f:
+            writer = csv.writer(f)
+            writer.writerow(['depth', 'states_discovered', 'time_elapsed'])
+
     print(f"Starting from depth {depth} with {len(state_to_id):,} states")
     
     while current_level:
@@ -215,11 +237,24 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
                     state_to_id[next_state_tuple] = new_state_id
                     id_to_state.append(next_state)
                     next_level.append((new_state_id, move))
-        
+                    
+                    current_count = len(state_to_id)
+                    if current_count % 100000 == 0:
+                        elapsed_time = time.time() - start_time
+                        print(f" Progress: {current_count:,} states discovered, {format_time(elapsed_time)} elapsed")
+
+                        with open(csv_file, 'a', newline='') as f:
+                            writer = csv.writer(f)
+                            writer.writerow([depth, current_count, elapsed_time])
         current_level = next_level
+        current_count = len(state_to_id)
+        elapsed_time = time.time() - start_time
+        with open(csv_file, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([depth, current_count, elapsed_time])
         depth += 1
-    
-    print(f"\nTotal states discovered: {len(state_to_id):,}")
+    elapsed_time = time.time() - start_time
+    print(f"\nTotal states discovered: {len(state_to_id):,}, {format_time(elapsed_time)} elapsed")
     
     # Build transition matrix
     print("\nBuilding transition matrix...")
@@ -253,7 +288,7 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
 if __name__ == "__main__":
     
     output_dir = 'cube_output'
-    max_moves = 9  # None = complete search, or set number
-    resume_from = None  # or 'cube_output/checkpoints/depth_10.pkl'
+    max_moves = None  
+    resume_from = None  
     
     generate_transition_matrix(output_dir, max_moves, resume_from)
