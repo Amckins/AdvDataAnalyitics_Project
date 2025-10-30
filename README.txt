@@ -49,7 +49,8 @@ U will change the colors in [4, 6, 2, 0] into the values that were in [0, 4, 6, 
 U' will reverse that action
 
 Readings Thus Far:
-https://proceedings.neurips.cc/paper/2020/file/b710915795b9e9c02cf10d6d2bdb688c-Paper.pdf  10/28/2025
+https://proceedings.neurips.cc/paper/2020/file/b710915795b9e9c02cf10d6d2bdb688c-Paper.pdf  10/27/2025
+https://www.sciencedirect.com/science/article/abs/pii/S0360835225007661 10/28/2025
 
 There is a lot that i need to update in this section
 --Added Transition Matrix Generation

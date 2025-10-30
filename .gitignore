@@ -3,4 +3,6 @@ cube_output/
 
 
 *.pkl
+*.npz
+q_table.npz
 

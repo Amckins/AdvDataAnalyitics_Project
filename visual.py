@@ -6,7 +6,7 @@ from bokeh.layouts import column, row
 from bokeh.io import curdoc
 from scramble import generate_random_scramble
 #labels intended to diagnose issues w/ indexing
-use_labels = False
+use_labels = True
 
 view_scramble_progress = True
 diagnose_state = False
@@ -155,8 +155,8 @@ def rotate_face(face_move):
                       y = y_vals,
                       color = dot_colors.copy(),
                       dot_id = [str(i) for i in range(len(x_vals))])
-    if diagnose_states:
-        print(read_current_state())
+    # if diagnose_states:
+    #     print(read_current_state())
 
 def parse_move_sequence(sequence):
     """when setting up the messed up state and when solving it, a sequence is needed"""
