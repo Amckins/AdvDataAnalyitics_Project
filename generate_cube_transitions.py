@@ -77,9 +77,9 @@ def rotate_cube(state, rotation):
     new_state = turn(new_state, moves[1])
     return new_state
 
-def generate_all_solved_orientations(base_solved):
+def generate_all_equivalent_permutations(current_state):
     orientations = []
-    current = base_solved.copy()
+    current = current_state.copy()
     
     for _ in range(4):
         state_top = current.copy()
@@ -175,7 +175,7 @@ def generate_transition_matrix(output_dir='output', max_moves=None, resume_from=
                        3, 4, 3, 4, 3, 4, 3, 4,
                        5, 6, 5, 6, 5, 6, 5, 6]
         
-        solved_orientations = generate_all_solved_orientations(base_solved)
+        solved_orientations = generate_all_equivalent_permutations(base_solved)
         state_to_id = {}
         id_to_state = []
         solved_state_ids = []

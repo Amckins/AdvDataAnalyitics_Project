@@ -6,7 +6,7 @@ from bokeh.layouts import column, row
 from bokeh.io import curdoc
 from scramble import generate_random_scramble
 #labels intended to diagnose issues w/ indexing
-use_labels = True
+use_labels = False
 
 view_scramble_progress = True
 diagnose_state = False
@@ -76,7 +76,7 @@ for (cx, cy) in centers:
         p.line(cx + np.sqrt(r) * np.cos(theta),
                cy + np.sqrt(r) * np.sin(theta),
                line_color= "black",
-               line_width = 1)
+               line_width = 3)
         
 x_vals, y_vals, color_vals = [], [], []
 dot_colors = []  # 1D vector of colors for each dot
@@ -221,6 +221,7 @@ p.circle(x = "x",
          color = "color",
          size = 20,
          line_color = "black",
+         line_width= 2,
          source = source)
 
 #Add labels with dot numbers
