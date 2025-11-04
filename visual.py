@@ -5,6 +5,9 @@ from bokeh.models import ColumnDataSource, LabelSet, Button, Div, TextInput
 from bokeh.layouts import column, row
 from bokeh.io import curdoc
 from scramble import generate_random_scramble
+from cube import FACES, RINGS
+from util import generate_random_scramble
+
 #labels intended to diagnose issues w/ indexing
 use_labels = False
 
@@ -103,23 +106,6 @@ for (c1, c2) in combinations(centers, 2):
 #create lists of indices that correspond to the faces/rings 
 #when a ring 'turns' the corresponding face will need to turn as well
 
-FACES = {
-    "U" : [4, 6, 2, 0],
-    "D" : [5, 1, 3, 7],
-    "B" : [8, 12, 14, 10],
-    "F" : [13, 9, 11, 15],
-    "R" : [16, 20, 22, 18],
-    "L" : [23, 21, 17, 19]    
-} 
-
-RINGS = {
-    "U" : [12, 8, 20, 16, 9, 13, 17, 21],
-    "D" : [23, 19, 15, 11, 18, 22, 10, 14],
-    "B" : [7, 3, 22, 20, 2, 6, 21, 23],
-    "F" : [19, 17, 4, 0, 16, 18, 1, 5],
-    "R" : [3, 1, 11, 9, 0, 2, 8, 10],
-    "L" : [14, 12, 6, 4, 13, 15, 5, 7]
-}
 def rotate_face(face_move):
     #Read which face is being turned and which direction should be turned
     face_name = face_move.rstrip("'")

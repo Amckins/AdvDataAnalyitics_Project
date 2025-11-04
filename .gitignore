@@ -1,6 +1,6 @@
 test.py
 cube_output/
-
+_pycache_/
 
 *.pkl
 *.npz

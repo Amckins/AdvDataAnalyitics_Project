@@ -1,3 +1,16 @@
+def format_time(elapsed_time):
+    hours = int(elapsed_time // 3600)
+    minutes = int((elapsed_time % 3600) // 60)
+    seconds = elapsed_time % 60
+    time_str = ""
+    if hours > 0:
+        time_str += f"{hours}h "
+    if minutes > 0:
+        time_str += f"{minutes}m "
+    if seconds > 0:
+        time_str += f"{seconds:.1f}s"
+    return time_str
+
 def generate_random_scramble(scramble_length=10):
     import random
     
@@ -41,5 +54,34 @@ def generate_random_scramble(scramble_length=10):
     
     return scramble_sequence[:-1]
 
-# for i in range(20):
-#     print(generate_random_scramble()) 
+def reward_schema(max_depth = 14):
+    import pandas as pd
+
+    def get_reward(old_depth, new_depth):
+        if new_depth == 0:
+            return 100
+        elif new_depth < old_depth:
+            return 14 - new_depth
+        elif new_depth >= old_depth:
+            return -(2*new_depth)
+        else:
+            return -1.0
+
+    depths = list(range(15))
+    
+    rewards = []
+
+    for i in depths:
+        row = []
+        for j in depths:
+            if i > max_depth:
+                row.append(-1)
+            else:
+                row.append(get_reward(i, j))
+        rewards.append(row)
+
+    df = pd.DataFrame(rewards, 
+                    index=[f"{i}" for i in depths], 
+                    columns=[f"{j}" for j in depths])
+
+    print(df.to_string())
