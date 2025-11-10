@@ -5,4 +5,6 @@ _pycache_/
 *.pkl
 *.npz
 q_table.npz
+training_log.txt
 
+q_learning_pass_through.py
