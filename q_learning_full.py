@@ -4,13 +4,13 @@ import time
 from util import format_time
 
 
-#Hyperparameters - Adjusted for unique 3.4M state space
+#Hyperparameters
 alpha = 0.1                         
 gamma = 0.99
 epsilon_start = .6
-epsilon_end = 0.01
+epsilon_end = 0.04
 epsilon_decay = 0.999999
-max_episodes =10000000
+max_episodes =100000000
 max_depth = 14
 convergence_acceptance_rate = 1
 steps_to_take_start = 14
@@ -19,23 +19,24 @@ log_interval = 100000
 
 masking = True
 learning = True
-full_agent_control = True
-reset_solve_tracker = True
-use_solve_tracker = False
+full_agent_control = False
+reset_solve_tracker = False
+use_solve_tracker = True
 save_at_end = True
-create_backup = True
+create_backup = False
 
 #Load transition data
-print("\nLoading unique Transition Matrix")
+print("\nLoading Transition Matrix")
 current_time = time.time()
-data = np.load('cube_output/npz/transitions_depth_None.npz')
+file = 'cube_output\\npz\\depth_None.npz'
+data = np.load(file)
 transitions = data['transitions']
 moves_list = data['moves']
 id_to_state = data['id_to_state']
 solved_state_id = int(data['solved_state_id'][0])
 num_states = len(transitions)
 num_actions = len(moves_list)
-print(f"Loaded {num_states:,} unique states in {format_time(time.time() - current_time)}")
+print(f"Loaded {num_states:,} states in {format_time(time.time() - current_time)}")
 print(f"Solved state ID: {solved_state_id}")
 
 #Invalid move pairs for action masking
@@ -56,12 +57,12 @@ def get_reward(old_state_id, new_state_id):
     new_depth, old_depth = int(depth[new_state_id]), int(depth[old_state_id])
 
     if new_depth == 0:
-        return 1000  #Massive reward for solving
+        return 1000                      #Massive reward for solving
     depth_change = old_depth - new_depth
     if depth_change > 0:
-        return 100 * depth_change  #Big reward for progress
+        return 100 * depth_change        #Big reward for progress
     else:
-        return -50 * abs(depth_change)  #Reasonable penalty
+        return -50 * abs(depth_change)   #Reasonable penalty
 
 def get_valid_actions(last_move):
     valid_actions = list(range(num_actions))
@@ -84,25 +85,25 @@ if os.path.exists(q_table_file):
     print(f"\nLoaded Q-table from {q_table_file} in {format_time(time.time()-current_time)}")
 else:
     Q = np.zeros((num_states, num_actions), dtype=np.float32)
+    starting_states_solved = np.zeros(num_states, dtype=bool)
     print("\nCreated new Q-table")
+
 if create_backup:
     from datetime import datetime
-    # Ensure the backup directory exists
+    #Ensure the backup directory exists
     backup_dir = "cube_output/q_table_backups"
     os.makedirs(backup_dir, exist_ok=True)
 
-    # Generate timestamped filename
+    #Generate timestamped filename
     name, ext = q_table_file.rsplit('.', 1)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file_name = f"q_table_{timestamp}.{ext}"
 
-    # Full path to save the backup
+    #Full path to save the backup
     backup_path = os.path.join("cube_output","q_table_backups", backup_file_name)
 
-    # Example: save your file (assuming you have something like np.savez)
     np.savez_compressed(backup_path, Q=Q, starting_states_solved = starting_states_solved)
 
-    print(f"Backup saved to: {backup_path}")
     
 #Training log
 training_log_file = 'training_log.txt'
@@ -138,12 +139,12 @@ faux_episode = 0
 times_converged = 0
 steps_to_take = steps_to_take_start
 
-print(f"\nStarting training for {max_episodes:,} episodes")
-print(f"Max steps per episode: {steps_to_take:,}")
-print(f"unique state space: {num_states:,} states")
+print(f"\nStarting training for {max_episodes:,} episodes with a max of {steps_to_take:,} steps per episode")
+print(f"Total State Space: {num_states:,} states")
 
 if reset_solve_tracker:
     starting_states_solved = np.zeros(num_states, dtype=bool)
+    
 num_solves = np.sum(~starting_states_solved)
 starting_solves = num_solves
 if num_solves > 0:
@@ -153,7 +154,7 @@ if num_solves > 0:
 start_time = time.time()
 last_checkpoint_time = start_time
 unsolved_indices = np.where(~starting_states_solved)[0]
-for episode in range(max_episodes):
+for session_episode in range(max_episodes):
 
     #Epsilon-greedy decay
     if not full_agent_control:
@@ -227,7 +228,7 @@ for episode in range(max_episodes):
         recent_solves.pop(0)
     
     #Periodic logging
-    if (episode + 1) % log_interval == 0:
+    if (session_episode + 1) % log_interval == 0:
         current_time = time.time()
         total_elapsed_time = current_time - start_time
         interval_elapsed_time = current_time - last_checkpoint_time
@@ -263,14 +264,14 @@ for episode in range(max_episodes):
         avg_solve_length = np.mean(interval_solve_lengths) if interval_solve_lengths else 0
         min_solve_length =np.min(interval_solve_lengths) if interval_solve_lengths else 0
         max_solve_length = np.max(interval_solve_lengths) if interval_solve_lengths else 0
-        percent_complete = (episode + 1) / max_episodes
+        percent_complete = (session_episode + 1) / max_episodes
         
         #Count unsolved states for display
         num_unsolved = np.sum(~starting_states_solved)
         unsolved_indices = np.where(~starting_states_solved)[0]
         
         output_str = ''
-        output_str += f"Ep {episode + 1:>10,} "
+        output_str += f"Ep {session_episode + 1:>10,} "
         output_str += f"({percent_complete:>6.2%}) "
         output_str += f"| Solves: {interval_solves:>5,} "
         output_str += f"({interval_success_rate:>6.2%}) "
@@ -294,7 +295,7 @@ for episode in range(max_episodes):
                 print(f"Success rate: {interval_success_rate:.2%} | Total solves: {cumulative_solves:,}")
                 print("="*60 + "\n")
                 break
-            elif (episode + 1) < max_episodes:
+            elif (session_episode + 1) < max_episodes:
                 steps_to_take -= step_increments
                 print(f"\n\n[Convergence {times_converged}/30] Reducing steps to {max(14, steps_to_take)}")
                 faux_episode = 0
@@ -303,11 +304,11 @@ for episode in range(max_episodes):
                 steps_to_take = max(14, steps_to_take)
                 recent_solves = []
 
-        elif (episode + 1) >= max_episodes:
+        elif (session_episode + 1) >= max_episodes:
             write_to_log()
             print("\n" + "="*60)
             print(f"Max episodes reached ({format_time(total_elapsed_time)})")
-            print(f"Solves: {solve_count:,}/{episode + 1:,} ({solve_count / (episode + 1):.2%})")
+            print(f"Solves: {solve_count:,}/{session_episode + 1:,} ({solve_count / (session_episode + 1):.2%})")
             print(f"Found Solves (len <14): {starting_solves - num_unsolved:,}")
             print("Saving Q-table...")
             current_time = time.time()

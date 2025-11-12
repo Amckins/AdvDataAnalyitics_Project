@@ -16,13 +16,20 @@ RINGS = {
     "L": [14, 12, 6, 4, 13, 15, 5, 7]
 }
 
+BASE_STATE = [1, 2, 1, 2, 1, 2, 1, 2,
+              3, 4, 3, 4, 3, 4, 3, 4,
+              5, 6, 5, 6, 5, 6, 5, 6]
+
+MOVES = ["U", "U'", "D", "D'", "B", "B'",
+         "F", "F'", "R", "R'", "L", "L'"]
+
 def turn(state, move):
     new_state = state.copy()
     face_name = move.rstrip("'2")
     clockwise = not move.endswith("'")
     cube_size = 2
     
-    # Rotate the ring
+    #Rotate the ring
     dot_ids = RINGS[face_name]
     current_colors = [new_state[dot_id] for dot_id in dot_ids]
     
@@ -34,7 +41,7 @@ def turn(state, move):
     for dot_id, color in zip(dot_ids, rotated_colors):
         new_state[dot_id] = color
 
-    # Rotate the face
+    #Rotate the face
     dot_ids = FACES[face_name]
     current_colors = [new_state[dot_id] for dot_id in dot_ids]
     
