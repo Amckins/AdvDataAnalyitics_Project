@@ -7,10 +7,10 @@ from util import format_time
 #Hyperparameters
 alpha = 0.1                         
 gamma = 0.99
-epsilon_start = .6
-epsilon_end = 0.04
+epsilon_start = .4
+epsilon_end = 0.03
 epsilon_decay = 0.999999
-max_episodes =100000000
+max_episodes = 2000000000
 max_depth = 14
 convergence_acceptance_rate = 1
 steps_to_take_start = 14
@@ -162,7 +162,7 @@ for session_episode in range(max_episodes):
     else:
         epsilon = 0
 
-    #Choose random starting state (80% unsolved, 20% random)
+    #Choose random starting state (95% unsolved, 5% random)
     if np.random.random() < 0.95 and use_solve_tracker:
         #Choose from states that haven't been solved within 14 steps yet
         if len(unsolved_indices) > 0:
@@ -171,7 +171,7 @@ for session_episode in range(max_episodes):
             #Fallback to random if all states somehow solved
             state_id = np.random.randint(0, num_states)
     else:
-        #Choose completely randomly (20% of the time)
+        #Choose completely randomly (5% of the time)
         state_id = np.random.randint(0, num_states)
 
     #Store the starting state for this episode
