@@ -7,19 +7,19 @@ from util import format_time
 #Hyperparameters
 alpha = 0.1                         
 gamma = 0.99
-epsilon_start = .4
-epsilon_end = 0.03
+epsilon_start = .5
+epsilon_end = 0.001
 epsilon_decay = 0.999999
-max_episodes = 2000000000
+max_episodes = 10000000
 max_depth = 14
-convergence_acceptance_rate = 1
-steps_to_take_start = 14
+convergence_acceptance_rate = .9995
+steps_to_take_start = 30
 step_increments = int(.025*steps_to_take_start)
 log_interval = 100000
 
 masking = True
 learning = True
-full_agent_control = False
+full_agent_control = True
 reset_solve_tracker = False
 use_solve_tracker = True
 save_at_end = True
@@ -57,12 +57,12 @@ def get_reward(old_state_id, new_state_id):
     new_depth, old_depth = int(depth[new_state_id]), int(depth[old_state_id])
 
     if new_depth == 0:
-        return 1000                      #Massive reward for solving
+        return 10000                      #Massive reward for solving
     depth_change = old_depth - new_depth
     if depth_change > 0:
         return 100 * depth_change        #Big reward for progress
     else:
-        return -50 * abs(depth_change)   #Reasonable penalty
+        return -50    #Reasonable penalty
 
 def get_valid_actions(last_move):
     valid_actions = list(range(num_actions))
@@ -70,6 +70,7 @@ def get_valid_actions(last_move):
         invalid_action = invalid_move_pairs[last_move]
         valid_actions.remove(invalid_action)
     return valid_actions
+
 
 #Load or create Q-table
 q_table_file = 'q_table.npz'
@@ -89,6 +90,7 @@ else:
     print("\nCreated new Q-table")
 
 if create_backup:
+    print("Creating Backup Q-Table")
     from datetime import datetime
     #Ensure the backup directory exists
     backup_dir = "cube_output/q_table_backups"
@@ -103,7 +105,7 @@ if create_backup:
     backup_path = os.path.join("cube_output","q_table_backups", backup_file_name)
 
     np.savez_compressed(backup_path, Q=Q, starting_states_solved = starting_states_solved)
-
+    print(f"Created Backup Q-Table: {backup_path}")
     
 #Training log
 training_log_file = 'training_log.txt'
@@ -182,7 +184,7 @@ for session_episode in range(max_episodes):
 
     for step in range(steps_to_take):
 
-        #Epsilon-greedy action selection
+        # #Epsilon-greedy action selection
         if np.random.random() < epsilon:
             #Explore: choose randomly from valid actions
             action_id = np.random.choice(get_valid_actions(last_move))
@@ -195,7 +197,7 @@ for session_episode in range(max_episodes):
         else:
             #Exploit without masking
             action_id = np.argmax(Q[state_id, get_valid_actions(last_move)])
-
+            
         #Take action
         next_state_id = transitions[state_id, action_id]
         reward = get_reward(state_id, next_state_id)
@@ -217,11 +219,11 @@ for session_episode in range(max_episodes):
             interval_solves += 1
             interval_solve_lengths.append(step + 1)  #Record number of steps to solve
             #Mark starting state as solved if within 14 steps
-            if step + 1 <= 14:
+            if len(step_hist)-1 <= 14 and use_solve_tracker:
                 for s in step_hist:
                     starting_states_solved[s] = True
             break
-    
+
     #Track recent solves for convergence checking
     recent_solves.append(1 if solved_this_episode else 0)
     if len(recent_solves) > log_interval:

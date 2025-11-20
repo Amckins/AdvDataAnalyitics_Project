@@ -1,6 +1,6 @@
 test.py
 cube_output/
-_pycache_/
+__pycache__/
 
 *.pkl
 *.npz
@@ -8,3 +8,4 @@ q_table.npz
 training_log.txt
 
 q_learning_pass_through.py
+test_solver.ipynb

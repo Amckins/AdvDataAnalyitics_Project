@@ -6,13 +6,16 @@ from bokeh.layouts import column, row
 from bokeh.io import curdoc
 from cube import FACES, RINGS
 from util import generate_random_scramble
+from solver import get_solve_str
 
 #configuration
-use_labels = False
+use_labels = True
 view_scramble_progress = True
-diagnose_state = True
-scramble_length = 20
-animation_delay = 500
+diagnose_state = False
+scramble_length = 30
+animation_delay = 300
+grid_visible = [False]
+break_glass = False
 
 #circle graph display parameters
 step = 0.4
@@ -497,8 +500,6 @@ def read_current_state():
 
 sequence_executing = [False]
 
-
-
 execute_button = Button(label = "Execute Sequence",
                         button_type = "success",
                         width = 150)
@@ -507,16 +508,12 @@ execute_button.on_click(execute_sequence)
 text_input = TextInput(value = "",
                        width = 300)
 
-sync_button = Button(label = "Apply Colors to Main",
-                     button_type = "primary",
-                     width = 110)
-sync_button.on_click(sync_colors)
 
 toggle_grid_button = Button(label = "Hide Grid",
                             button_type = "warning",
                             width = 110)
 
-grid_visible = [True]
+
 
 def toggle_grid():
     if grid_visible[0]:
@@ -529,6 +526,17 @@ def toggle_grid():
         grid_visible[0] = True
 
 toggle_grid_button.on_click(toggle_grid)
+
+def set_solve_str():
+    disable_all_buttons()
+    text_input.value = ''
+    state_vector = read_current_state()
+    if 'Q' not in locals() or 'Q' not in globals():
+        break_glass = True
+    solve_str = get_solve_str(state_vector, break_glass = break_glass)
+    if solve_str:
+        text_input.value = solve_str
+    enable_all_buttons()
 
 button_U = Button(label="U", button_type="default", width=50)
 button_U_prime = Button(label="U'", button_type="default", width=50)
@@ -571,16 +579,30 @@ button_Y_prime.on_click(lambda: rotate_cube("y'"))
 button_Z.on_click(lambda: rotate_cube("z"))
 button_Z_prime.on_click(lambda: rotate_cube("z'"))
 
-button_scramble = Button(label="Scramble", button_type="warning", width=110)
+button_scramble = Button(label="Scramble",
+                         button_type="warning",
+                         width=110)
 button_scramble.on_click(execute_scramble)
+
+button_solver = Button(label = "Generate Solve String",
+                      button_type = "success",
+                      width = 150)
+button_solver.on_click(set_solve_str)
 
 #Functions to enable/disable all buttons during sequence execution
 all_buttons = [
-    button_U, button_U_prime, button_D, button_D_prime,
-    button_B, button_B_prime, button_F, button_F_prime,
-    button_R, button_R_prime, button_L, button_L_prime,
-    button_X, button_X_prime, button_Y, button_Y_prime,
-    button_Z, button_Z_prime, button_scramble, execute_button
+    button_U, button_U_prime, 
+    button_D, button_D_prime,
+    button_B, button_B_prime, 
+    button_F, button_F_prime,
+    button_R, button_R_prime, 
+    button_L, button_L_prime,
+    button_X, button_X_prime, 
+    button_Y, button_Y_prime,
+    button_Z, button_Z_prime, 
+    button_scramble, 
+    execute_button,
+    button_solver
 ]
 
 def disable_all_buttons():
@@ -606,13 +628,16 @@ button_col = column(
 #Grid column with toggle button
 grid_column = column(p_square)
 
+
 #Final layout
 layout = column(
     row(),
     row(p_circle, button_col, grid_column),
-    row(execute_button, text_input)
+    row(execute_button, text_input),
+    row(button_solver)
 )
 
 #Add to Bokeh document
 curdoc().add_root(layout)
 curdoc().title = "Rubik's Cube Interface"
+toggle_grid()
